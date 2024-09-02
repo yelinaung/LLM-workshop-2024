@@ -47,7 +47,17 @@ def create_dataloader_v1(txt, batch_size=4, max_length=256,
 
 
 class MultiHeadAttention(nn.Module):
-    def __init__(self, d_in, d_out, context_length, dropout, num_heads, qkv_bias=False):
+    def __init__(self, d_in:int , d_out:int, context_length: int, dropout: float, num_heads: int, qkv_bias=False):
+        """
+        Multi-head attention mechanism.
+        Args:
+            d_in (int): Input dimension.
+            d_out (int): Output dimension.
+            context_length (int): Length of the context.
+            dropout (float): Dropout rate.
+            num_heads (int): Number of attention heads.
+            qkv_bias (bool): Whether to use bias in the linear projections.
+        """
         super().__init__()
         assert d_out % num_heads == 0, "d_out must be divisible by num_heads"
 
@@ -62,7 +72,16 @@ class MultiHeadAttention(nn.Module):
         self.dropout = nn.Dropout(dropout)
         self.register_buffer('mask', torch.triu(torch.ones(context_length, context_length), diagonal=1))
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Forward pass of the multi-head attention mechanism.
+        What is a Tensor
+        A tensor is a multi-dimensional array of numbers.
+        Args:
+            x (torch.Tensor): Input tensor of shape (batch_size, num_tokens, d_in).
+        Returns:
+            torch.Tensor: Output tensor of shape (batch_size, num_tokens, d_out).
+        """
         b, num_tokens, d_in = x.shape
 
         keys = self.W_key(x)  # Shape: (b, num_tokens, d_out)
@@ -141,7 +160,15 @@ class FeedForward(nn.Module):
 
 
 class TransformerBlock(nn.Module):
-    def __init__(self, cfg):
+    def __init__(self, cfg: dict):
+        """
+        cfg:
+            emb_dim: int
+            context_length: int
+            n_heads: int
+            drop_rate: float
+            qkv_bias: bool
+        """
         super().__init__()
         self.att = MultiHeadAttention(
             d_in=cfg["emb_dim"],
@@ -155,7 +182,7 @@ class TransformerBlock(nn.Module):
         self.norm2 = LayerNorm(cfg["emb_dim"])
         self.drop_shortcut = nn.Dropout(cfg["drop_rate"])
 
-    def forward(self, x):
+    def forward(self, x: torch.Tensor) -> torch.Tensor:
         # Shortcut connection for attention block
         shortcut = x
         x = self.norm1(x)
